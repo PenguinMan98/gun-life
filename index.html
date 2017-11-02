@@ -18,19 +18,23 @@
             height: 800px;
             display: flex;
             flex-flow: row wrap;
-            margin: 0px auto;
+            margin: 1rem auto;
         }
         pixel {
             display: block;
-            height: 2px;
-            width: 2px;
-            max-height: 2px;
-            max-width: 2px;
+            min-height: 8px;
+            min-width: 8px;
+            max-height: 8px;
+            max-width: 8px;
             background-color: white;
         }
         pixel.on{
             background-color: black;
         }
+        /*pixel[data-row="0"] { background-color: black; }
+        pixel[data-row="2"] { background-color: black; }
+        pixel[data-column="4"] { background-color: black; }
+        pixel[data-column="6"] { background-color: black; }*/
     </style>
 </head>
 <body>
@@ -46,43 +50,78 @@
       const gun = new Gun();
       const game = gun.get('gun-life');*/
       var pixelArray = [];
+      var gameState = 'reset';
 
-      // ok, we have 1000 x 800 with 4px per game pixel.
-      // that means there are 500 columns, 400 rows.
-      // It also means there will be 200,000 game pixels.
+      // ok, we have 1000 x 800 with 16px per game pixel.
+      // that means there are 125 columns, 100 rows.
+      // It also means there will be 12,500 game pixels.
       // I will use a standard toroidal array technique for the boundaries.
       // Each pixel will keep track of the number of live neighbors it has.
       // It is the responsibility of a pixel that changes to inform its neighbors of the change.
-      // this means pixes will need 'addLiveNeighbor' and 'removeLiveNeighbor' methods
+      // this means pixels will need 'addLiveNeighbor' and 'removeLiveNeighbor' methods
       // the main check for a state transition will be in the 'tick' method.
 
       class Pixel{
           /**
            * The constructor should store the pixel's address in the array and
-           *   initialize the liveNeighbor count to 0
+           *   initialize the liveNeighbor count to 0 and the state to off
            * @param column
            * @param row
+           * @param elem
            */
-          constructor(column, row){
+          constructor(column, row, elem){
               this.column = column;
               this.row = row;
               this.liveNeighborCount = 0;
+              this.on = false;
+
+              this.elem = elem;
+              this.elem.addEventListener('click',function(){
+                console.log('damn thing clicked',this.row,this.column,this.liveNeighborCount, this.on);
+                if( gameState == 'reset' ){
+                  this.toggleState();
+                }
+              }.bind(this));
+          }
+          toggleState() {
+              this.on = !this.on;
+              if(this.on){
+                  this.elem.classList.add( 'on' );
+              }else{
+                  this.elem.classList.remove( 'on' );
+              }
+          }
+          increaseLiveNeighborCount() {
+              this.liveNeighborCount += 1;
+          }
+          decreaseLiveNeighborCount() {
+              this.liveNeighborCount += 1;
+          }
+          tick(){
+              if(this.liveNeighborCount == 2 && !this.on ){
+                  toggleState();
+              }
+              if(this.liveNeighborCount < 2 && this.on ){
+                  toggleState();
+              }
+              if(this.liveNeighborCount > 3 && this.on ){
+                  toggleState();
+              }
           }
       }
 
       /* ===== RENDER THE PIXELS ===== */
       var thisPixel;
-      for( r = 0; r < 400; r++ ){
-          for( c = 0; c < 500; c++ ){
+      for( r = 0; r < 100; r++ ){
+          for( c = 0; c < 125; c++ ){
               console.log('building a pixel for ',c,r);
               //game.get(i).get(j).put( new Pixel(c,r) );
               if( !pixelArray[r] ){ pixelArray[r] = []; } // if no array, make one.
-              pixelArray[r][c] = new Pixel( r, c ); // create the new pixel
               thisPixel = document.createElement('pixel');
               thisPixel.dataset.row = r;
               thisPixel.dataset.column = c;
-              console.log('thisPixel',thisPixel);
-              document.querySelector('game').appendChild(thisPixel)
+              document.querySelector('game').appendChild(thisPixel);
+              pixelArray[r][c] = new Pixel( r, c, thisPixel ); // create the new pixel
           }
       }
 
